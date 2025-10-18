@@ -4,6 +4,7 @@ import { Trend } from '../types/trend';
 import { cva } from 'class-variance-authority';
 import { clsx } from 'clsx';
 import { Shield, ShieldAlert, ShieldX } from 'lucide-react';
+import { parseCitationsToReact } from '../utils/citation-renderer';
 
 const cardVariants = cva(
   'rounded-lg border p-6 transition-all hover:shadow-lg cursor-pointer',
@@ -72,11 +73,11 @@ export function TrendCard({ trend, onAnalyze, isAnalyzing, onGenerateNeeds }: Tr
       </div>
 
       <h3 className="text-lg font-semibold text-gray-900 mb-2">
-        {trend.title}
+        {parseCitationsToReact(trend.title)}
       </h3>
 
       <p className="text-sm text-gray-600 mb-4 line-clamp-3">
-        {trend.summary}
+        {parseCitationsToReact(trend.summary)}
       </p>
 
       {/* Web Search Citations */}

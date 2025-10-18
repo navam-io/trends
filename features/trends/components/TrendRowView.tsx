@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { Trend } from '../types/trend';
 import { Button } from '@/lib/ui/button';
 import { Badge } from '@/lib/ui/badge';
-import { 
-  TrendingUp, 
-  ExternalLink, 
+import {
+  TrendingUp,
+  ExternalLink,
   Calendar,
   ChevronDown,
   Zap,
@@ -14,6 +14,7 @@ import {
   ShieldAlert,
   ShieldX
 } from 'lucide-react';
+import { parseCitationsToReact } from '../utils/citation-renderer';
 
 interface CompanyProfile {
   industry: string;
@@ -114,7 +115,7 @@ export function TrendRowView({
                     <div className="flex-1 min-w-0">
                       {/* Title - Full width, no truncation */}
                       <h3 className="font-semibold text-gray-900 text-base mb-2">
-                        {trend.title}
+                        {parseCitationsToReact(trend.title)}
                       </h3>
                       
                       {/* Metadata Row */}
@@ -188,7 +189,7 @@ export function TrendRowView({
                     <div>
                       <h4 className="text-sm font-medium text-gray-700 mb-2">Summary</h4>
                       <p className="text-sm text-gray-800 leading-relaxed">
-                        {trend.summary}
+                        {parseCitationsToReact(trend.summary)}
                       </p>
                     </div>
 
