@@ -276,7 +276,7 @@ ${companyContext.goals && companyContext.goals.length > 0 ? `- Each solution sho
     })
 
     // When AI uses web search, content may have multiple blocks
-    // Find the LAST text block which should contain the final JSON
+    // The JSON might be in ANY block, not necessarily the last one!
     const textBlocks = completion.content.filter(block => block.type === 'text')
 
     if (textBlocks.length === 0) {
@@ -284,9 +284,33 @@ ${companyContext.goals && companyContext.goals.length > 0 ? `- Each solution sho
       throw new Error('No text response from Anthropic')
     }
 
-    // Use the last text block (after all tool uses and thinking)
-    const lastTextBlock = textBlocks[textBlocks.length - 1]
-    let response = lastTextBlock.text
+    console.log(`Found ${textBlocks.length} text blocks in AI response`);
+
+    // Search ALL text blocks for the one containing JSON with our expected key
+    let responseWithJSON = '';
+    let foundBlockIndex = -1;
+
+    for (let i = 0; i < textBlocks.length; i++) {
+      const blockText = textBlocks[i].text;
+      console.log(`\nBlock ${i + 1}/${textBlocks.length} - Length: ${blockText.length}`);
+      console.log(`First 200 chars: ${blockText.substring(0, 200)}`);
+
+      // Check if this block contains our expected JSON key
+      if (blockText.includes('"solutions"') || blockText.includes('solutions')) {
+        console.log(`✓ Block ${i + 1} contains "solutions" - using this block!`);
+        responseWithJSON = blockText;
+        foundBlockIndex = i;
+        break;
+      }
+    }
+
+    if (!responseWithJSON) {
+      console.error('✗ No block contains "solutions" key - using last block as fallback');
+      responseWithJSON = textBlocks[textBlocks.length - 1].text;
+      foundBlockIndex = textBlocks.length - 1;
+    }
+
+    let response = responseWithJSON;
 
     // Strip markdown code blocks if present (```json...```)
     if (response.trim().startsWith('```')) {
@@ -295,6 +319,8 @@ ${companyContext.goals && companyContext.goals.length > 0 ? `- Each solution sho
       response = response.replace(/\n?```$/, '');
       response = response.trim();
     }
+
+    console.log(`\nUsing block ${foundBlockIndex + 1} for JSON extraction`);
 
     // Use robust JSON extraction with extensive logging
     const jsonContent = extractJSONFromResponse(response, 'solutions');
