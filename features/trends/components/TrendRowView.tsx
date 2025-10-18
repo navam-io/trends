@@ -192,6 +192,29 @@ export function TrendRowView({
                       </p>
                     </div>
 
+                    {/* Web Search Citations */}
+                    {trend.web_search_citations && trend.web_search_citations.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Sources</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {trend.web_search_citations.map((citation, index) => (
+                            <a
+                              key={index}
+                              href={citation.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-50 hover:bg-gray-100 rounded-md border border-gray-200 transition-colors"
+                              title={citation.title}
+                            >
+                              <span className="font-semibold text-gray-700">[{index + 1}]</span>
+                              <span className="text-gray-600 truncate max-w-[200px]">{citation.title}</span>
+                              <ExternalLink className="h-3 w-3 text-gray-400" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Additional Actions */}
                     <div className="flex items-center gap-3 pt-2">
                       {trend.source_url && (

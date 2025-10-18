@@ -141,7 +141,16 @@ ${companyContext.goals && companyContext.goals.length > 0 ? `- Each solution sho
     if (!content || content.type !== 'text') {
       throw new Error('No text response from Anthropic')
     }
-    const response = content.text
+    let response = content.text
+
+    // Strip markdown code blocks if present (```json...```)
+    if (response.trim().startsWith('```')) {
+      // Remove opening ```json or ```
+      response = response.replace(/^```(?:json)?\n?/, '');
+      // Remove closing ```
+      response = response.replace(/\n?```$/, '');
+      response = response.trim();
+    }
 
     const parsed = JSON.parse(response)
     const solutions = parsed.solutions || []

@@ -79,6 +79,29 @@ export function TrendCard({ trend, onAnalyze, isAnalyzing, onGenerateNeeds }: Tr
         {trend.summary}
       </p>
 
+      {/* Web Search Citations */}
+      {trend.web_search_citations && trend.web_search_citations.length > 0 && (
+        <div className="mb-4 pt-3 border-t border-gray-200">
+          <p className="text-xs font-medium text-gray-500 mb-2">Sources:</p>
+          <div className="flex flex-wrap gap-2">
+            {trend.web_search_citations.map((citation, index) => (
+              <a
+                key={index}
+                href={citation.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+                title={citation.title}
+              >
+                <span className="text-gray-700">[{index + 1}]</span>
+                <span className="text-gray-600 truncate max-w-[150px]">{citation.title}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs text-gray-500">
           {trend.source_url ? (

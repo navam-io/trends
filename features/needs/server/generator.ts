@@ -107,8 +107,18 @@ Return as JSON object with "needs" array property:
  */
 function parseNeedsFromCompletion(completion: string, trendId: string, companyId: string): Need[] {
   try {
-    // Since we're using JSON response format, the completion should be valid JSON
-    const parsed = JSON.parse(completion);
+    // Strip markdown code blocks if present (```json...```)
+    let cleanedCompletion = completion.trim();
+    if (cleanedCompletion.startsWith('```')) {
+      // Remove opening ```json or ```
+      cleanedCompletion = cleanedCompletion.replace(/^```(?:json)?\n?/, '');
+      // Remove closing ```
+      cleanedCompletion = cleanedCompletion.replace(/\n?```$/, '');
+      cleanedCompletion = cleanedCompletion.trim();
+    }
+
+    // Parse the cleaned JSON
+    const parsed = JSON.parse(cleanedCompletion);
     
     // Handle both array format (legacy) and object format (new)
     let parsedNeeds: any[];
