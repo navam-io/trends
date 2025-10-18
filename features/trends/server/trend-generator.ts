@@ -82,41 +82,68 @@ export async function generateDynamicTrends(
     });
 
     // Extract content and web search citations from Claude's response
-    let responseText = '';
+    // When AI uses web search, content may have multiple blocks - get the LAST text block
+    const textBlocks = response.content.filter(block => block.type === 'text');
     const citations: WebSearchCitation[] = [];
-    
-    // Process all content blocks to extract text and citations
+
+    if (textBlocks.length === 0) {
+      console.error('No text blocks in AI response:', JSON.stringify(response.content, null, 2));
+      throw new Error('No text response from Anthropic API');
+    }
+
+    // Use the LAST text block (after all tool uses and reasoning)
+    const lastTextBlock = textBlocks[textBlocks.length - 1];
+    let responseText = lastTextBlock.text;
+
+    // Extract citations from all content blocks
     for (const content of response.content) {
-      if (content.type === 'text') {
-        responseText += content.text;
-        
-        // Extract citations if available
-        if (content.citations) {
-          for (const citation of content.citations) {
-            if (citation.type === 'web_search_result_location') {
-              citations.push({
-                url: citation.url,
-                title: citation.title || 'Web Search Result',
-                start_index: 0, // Web search citations don't have specific indices
-                end_index: 0,
-              });
-            }
+      if (content.type === 'text' && content.citations) {
+        for (const citation of content.citations) {
+          if (citation.type === 'web_search_result_location') {
+            citations.push({
+              url: citation.url,
+              title: citation.title || 'Web Search Result',
+              start_index: 0,
+              end_index: 0,
+            });
           }
         }
       }
     }
-    
-    if (!responseText) {
-      throw new Error('No text response from Anthropic API');
+
+    console.log('Trends AI response text (first 300 chars):', responseText.substring(0, 300));
+
+    // Strip markdown code blocks if present
+    if (responseText.trim().startsWith('```')) {
+      responseText = responseText.replace(/^```(?:json)?\n?/, '');
+      responseText = responseText.replace(/\n?```$/, '');
+      responseText = responseText.trim();
     }
-    
-    // Extract JSON from the response text
-    const jsonMatch = responseText.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
-    const jsonContent = jsonMatch ? jsonMatch[0] : responseText;
+
+    // Extract JSON object/array from mixed text - look for "trends" property
+    let jsonContent = responseText;
+    const trendsJsonMatch = responseText.match(/\{[\s\S]*?"trends"[\s\S]*?\[[\s\S]*?\]\s*\}/);
+    if (trendsJsonMatch) {
+      jsonContent = trendsJsonMatch[0];
+      console.log('Extracted JSON with "trends" array from mixed response');
+    } else {
+      // Try to extract any JSON array
+      const arrayMatch = responseText.match(/\[[\s\S]*?\{[\s\S]*?\}[\s\S]*?\]/);
+      if (arrayMatch) {
+        jsonContent = arrayMatch[0];
+        console.log('Extracted JSON array from mixed response');
+      }
+    }
 
     // Parse the response - handle both array and object with array property
     let trendsData: any[];
-    const parsed = JSON.parse(jsonContent);
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonContent);
+    } catch (parseError) {
+      console.error('JSON parse error in trends generator. Raw content:', jsonContent);
+      throw new Error(`Failed to parse AI response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+    }
     
     if (Array.isArray(parsed)) {
       trendsData = parsed;
