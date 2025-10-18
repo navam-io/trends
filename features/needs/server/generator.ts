@@ -4,6 +4,54 @@ import { generateCompletion } from '@/lib/ai/anthropic';
 import { serverConfig } from '@/lib/config/server';
 
 /**
+ * Extract a balanced JSON object from text starting with '{'
+ * This properly handles nested braces and finds the matching closing brace
+ */
+function extractBalancedJSON(text: string): string {
+  let braceCount = 0;
+  let inString = false;
+  let escapeNext = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+
+    // Handle escape sequences
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      escapeNext = true;
+      continue;
+    }
+
+    // Handle string boundaries
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    // Only count braces outside of strings
+    if (!inString) {
+      if (char === '{') {
+        braceCount++;
+      } else if (char === '}') {
+        braceCount--;
+
+        // When we've closed all braces, we've found the end of the JSON
+        if (braceCount === 0) {
+          return text.substring(0, i + 1);
+        }
+      }
+    }
+  }
+
+  // If we couldn't find balanced braces, return the original text
+  return text;
+}
+
+/**
  * Generate personalized business needs from a trend and company context
  */
 export async function generateNeedsFromTrend(
@@ -117,19 +165,31 @@ function parseNeedsFromCompletion(completion: string, trendId: string, companyId
       cleanedCompletion = cleanedCompletion.trim();
     }
 
-    // Try to extract JSON if response has conversational text before/after
-    const jsonMatch = cleanedCompletion.match(/\{[\s\S]*"needs"[\s\S]*\}/);
-    if (jsonMatch) {
-      cleanedCompletion = jsonMatch[0];
-      console.log('Extracted JSON from mixed response (needs)');
+    // Extract JSON from mixed conversational text using balanced brace matching
+    let jsonContent = cleanedCompletion;
+
+    // First, try to find a properly structured object with "needs" key
+    const jsonStartIndex = cleanedCompletion.search(/\{\s*"needs"\s*:\s*\[/);
+    if (jsonStartIndex !== -1) {
+      // Found the start, now find the matching closing brace
+      jsonContent = extractBalancedJSON(cleanedCompletion.substring(jsonStartIndex));
+      console.log('Extracted JSON using balanced brace matching (needs)');
+    } else {
+      // Fallback: try regex match (less reliable)
+      const jsonMatch = cleanedCompletion.match(/\{[\s\S]*?"needs"[\s\S]*?\[[\s\S]*?\]\s*\}/);
+      if (jsonMatch) {
+        jsonContent = jsonMatch[0];
+        console.log('Extracted JSON using regex fallback (needs)');
+      }
     }
 
     // Parse the cleaned JSON
     let parsed;
     try {
-      parsed = JSON.parse(cleanedCompletion);
+      parsed = JSON.parse(jsonContent);
     } catch (parseError) {
-      console.error('JSON parse error in needs generator. Raw completion:', cleanedCompletion);
+      console.error('JSON parse error in needs generator. Attempted to parse:', jsonContent.substring(0, 500));
+      console.error('Full raw completion:', cleanedCompletion);
       throw new Error(`Failed to parse AI response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
     }
     

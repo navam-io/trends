@@ -1,12 +1,60 @@
 import { anthropic } from '@/lib/ai/anthropic'
 import { getAIModel } from '@/lib/config/reader'
 import { serverConfig } from '@/lib/config/server'
-import type { 
-  Solution, 
-  GenerateSolutionsInput, 
+import type {
+  Solution,
+  GenerateSolutionsInput,
   ComparisonCriteria,
-  SolutionComparison 
+  SolutionComparison
 } from '../types/solution'
+
+/**
+ * Extract a balanced JSON object from text starting with '{'
+ * This properly handles nested braces and finds the matching closing brace
+ */
+function extractBalancedJSON(text: string): string {
+  let braceCount = 0;
+  let inString = false;
+  let escapeNext = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+
+    // Handle escape sequences
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      escapeNext = true;
+      continue;
+    }
+
+    // Handle string boundaries
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    // Only count braces outside of strings
+    if (!inString) {
+      if (char === '{') {
+        braceCount++;
+      } else if (char === '}') {
+        braceCount--;
+
+        // When we've closed all braces, we've found the end of the JSON
+        if (braceCount === 0) {
+          return text.substring(0, i + 1);
+        }
+      }
+    }
+  }
+
+  // If we couldn't find balanced braces, return the original text
+  return text;
+}
 
 export async function generateSolutions(input: GenerateSolutionsInput): Promise<Solution[]> {
   const { needTitle, needDescription, companyContext, preferences } = input
@@ -150,7 +198,7 @@ ${companyContext.goals && companyContext.goals.length > 0 ? `- Each solution sho
     const lastTextBlock = textBlocks[textBlocks.length - 1]
     let response = lastTextBlock.text
 
-    console.log('AI response text (first 200 chars):', response.substring(0, 200))
+    console.log('AI response text (first 500 chars):', response.substring(0, 500))
 
     // Strip markdown code blocks if present (```json...```)
     if (response.trim().startsWith('```')) {
@@ -159,18 +207,32 @@ ${companyContext.goals && companyContext.goals.length > 0 ? `- Each solution sho
       response = response.trim();
     }
 
-    // Try to extract JSON if response has conversational text before/after
-    const jsonMatch = response.match(/\{[\s\S]*"solutions"[\s\S]*\}/);
-    if (jsonMatch) {
-      response = jsonMatch[0];
-      console.log('Extracted JSON from mixed response');
+    // Extract JSON from mixed conversational text
+    // Strategy: Find the actual start of the JSON object (opening brace)
+    let jsonContent = response;
+
+    // First, try to find a properly structured object with "solutions" key
+    // Look for opening brace that starts a valid JSON object
+    const jsonStartIndex = response.search(/\{\s*"solutions"\s*:\s*\[/);
+    if (jsonStartIndex !== -1) {
+      // Found the start, now find the matching closing brace
+      jsonContent = extractBalancedJSON(response.substring(jsonStartIndex));
+      console.log('Extracted JSON using balanced brace matching');
+    } else {
+      // Fallback: try regex match (less reliable)
+      const jsonMatch = response.match(/\{[\s\S]*?"solutions"[\s\S]*?\[[\s\S]*?\]\s*\}/);
+      if (jsonMatch) {
+        jsonContent = jsonMatch[0];
+        console.log('Extracted JSON using regex fallback');
+      }
     }
 
     let parsed;
     try {
-      parsed = JSON.parse(response);
+      parsed = JSON.parse(jsonContent);
     } catch (parseError) {
-      console.error('JSON parse error. Raw response:', response);
+      console.error('JSON parse error. Attempted to parse:', jsonContent.substring(0, 500));
+      console.error('Full raw response:', response);
       throw new Error(`Failed to parse AI response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
     }
 
