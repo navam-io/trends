@@ -52,6 +52,49 @@ function extractBalancedJSON(text: string): string {
 }
 
 /**
+ * Robust JSON extraction from AI responses with markdown and conversational text
+ * Tries multiple strategies and logs extensively for debugging
+ */
+function extractJSONFromResponse(response: string, expectedKey: string = 'needs'): string {
+  console.log('=== JSON Extraction Debug (Needs) ===');
+  console.log('Response length:', response.length);
+  console.log('First 500 chars:', response.substring(0, 500));
+
+  // Strategy 1: Look for the expected JSON key with flexible whitespace
+  const keyPattern = new RegExp(`\\{[\\s\\S]*?"${expectedKey}"[\\s\\S]*?:`, 'i');
+  const keyMatch = response.search(keyPattern);
+
+  if (keyMatch !== -1) {
+    console.log(`✓ Found "${expectedKey}" key at position ${keyMatch}`);
+    const jsonStart = response.substring(keyMatch);
+
+    // Find the opening brace before the key
+    const openBrace = jsonStart.indexOf('{');
+    if (openBrace !== -1) {
+      const extracted = extractBalancedJSON(jsonStart.substring(openBrace));
+      console.log('✓ Extracted using balanced braces, length:', extracted.length);
+      return extracted;
+    }
+  }
+
+  console.log(`✗ Could not find "${expectedKey}" key, trying backup strategies...`);
+
+  // Strategy 2: Find ANY JSON object
+  const anyObjectPattern = /\{\s*"[^"]+"\s*:/;
+  const objectMatch = response.search(anyObjectPattern);
+
+  if (objectMatch !== -1) {
+    console.log(`✓ Found JSON object pattern at position ${objectMatch}`);
+    const extracted = extractBalancedJSON(response.substring(objectMatch));
+    console.log('✓ Extracted using object pattern, length:', extracted.length);
+    return extracted;
+  }
+
+  console.log('✗ All extraction strategies failed!');
+  return response;
+}
+
+/**
  * Generate personalized business needs from a trend and company context
  */
 export async function generateNeedsFromTrend(
@@ -165,31 +208,18 @@ function parseNeedsFromCompletion(completion: string, trendId: string, companyId
       cleanedCompletion = cleanedCompletion.trim();
     }
 
-    // Extract JSON from mixed conversational text using balanced brace matching
-    let jsonContent = cleanedCompletion;
-
-    // First, try to find a properly structured object with "needs" key
-    const jsonStartIndex = cleanedCompletion.search(/\{\s*"needs"\s*:\s*\[/);
-    if (jsonStartIndex !== -1) {
-      // Found the start, now find the matching closing brace
-      jsonContent = extractBalancedJSON(cleanedCompletion.substring(jsonStartIndex));
-      console.log('Extracted JSON using balanced brace matching (needs)');
-    } else {
-      // Fallback: try regex match (less reliable)
-      const jsonMatch = cleanedCompletion.match(/\{[\s\S]*?"needs"[\s\S]*?\[[\s\S]*?\]\s*\}/);
-      if (jsonMatch) {
-        jsonContent = jsonMatch[0];
-        console.log('Extracted JSON using regex fallback (needs)');
-      }
-    }
+    // Use robust JSON extraction with extensive logging
+    const jsonContent = extractJSONFromResponse(cleanedCompletion, 'needs');
 
     // Parse the cleaned JSON
     let parsed;
     try {
       parsed = JSON.parse(jsonContent);
+      console.log('✓ Successfully parsed JSON (needs)');
     } catch (parseError) {
-      console.error('JSON parse error in needs generator. Attempted to parse:', jsonContent.substring(0, 500));
-      console.error('Full raw completion:', cleanedCompletion);
+      console.error('=== JSON PARSE ERROR (Needs) ===');
+      console.error('Error:', parseError instanceof Error ? parseError.message : 'Unknown error');
+      console.error('Attempted to parse:', jsonContent.substring(0, 1000));
       throw new Error(`Failed to parse AI response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
     }
     

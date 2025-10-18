@@ -56,6 +56,96 @@ function extractBalancedJSON(text: string): string {
   return text;
 }
 
+/**
+ * Robust JSON extraction from AI responses with markdown and conversational text
+ * Tries multiple strategies and logs extensively for debugging
+ */
+function extractJSONFromResponse(response: string, expectedKey: string = 'solutions'): string {
+  console.log('=== JSON Extraction Debug ===');
+  console.log('Response length:', response.length);
+  console.log('First 500 chars:', response.substring(0, 500));
+  console.log('Last 200 chars:', response.substring(Math.max(0, response.length - 200)));
+
+  // Strategy 1: Look for the expected JSON key with flexible whitespace
+  const keyPattern = new RegExp(`\\{[\\s\\S]*?"${expectedKey}"[\\s\\S]*?:`, 'i');
+  const keyMatch = response.search(keyPattern);
+
+  if (keyMatch !== -1) {
+    console.log(`✓ Found "${expectedKey}" key at position ${keyMatch}`);
+    const jsonStart = response.substring(keyMatch);
+
+    // Find the opening brace before the key
+    const openBrace = jsonStart.indexOf('{');
+    if (openBrace !== -1) {
+      const extracted = extractBalancedJSON(jsonStart.substring(openBrace));
+      console.log('✓ Extracted using balanced braces, length:', extracted.length);
+      console.log('Extracted JSON (first 300 chars):', extracted.substring(0, 300));
+      return extracted;
+    }
+  }
+
+  console.log(`✗ Could not find "${expectedKey}" key, trying backup strategies...`);
+
+  // Strategy 2: Find ANY JSON object (starts with { followed by "key": pattern)
+  const anyObjectPattern = /\{\s*"[^"]+"\s*:/;
+  const objectMatch = response.search(anyObjectPattern);
+
+  if (objectMatch !== -1) {
+    console.log(`✓ Found JSON object pattern at position ${objectMatch}`);
+    const extracted = extractBalancedJSON(response.substring(objectMatch));
+    console.log('✓ Extracted using object pattern, length:', extracted.length);
+    console.log('Extracted JSON (first 300 chars):', extracted.substring(0, 300));
+    return extracted;
+  }
+
+  console.log('✗ Could not find JSON object pattern, trying array...');
+
+  // Strategy 3: Find JSON array (starts with [)
+  const arrayPattern = /\[\s*\{/;
+  const arrayMatch = response.search(arrayPattern);
+
+  if (arrayMatch !== -1) {
+    console.log(`✓ Found JSON array pattern at position ${arrayMatch}`);
+    // For arrays, we need to match brackets instead of braces
+    const arrayStart = response.substring(arrayMatch);
+    let bracketCount = 0;
+    let inString = false;
+    let escapeNext = false;
+
+    for (let i = 0; i < arrayStart.length; i++) {
+      const char = arrayStart[i];
+
+      if (escapeNext) {
+        escapeNext = false;
+        continue;
+      }
+      if (char === '\\') {
+        escapeNext = true;
+        continue;
+      }
+      if (char === '"') {
+        inString = !inString;
+        continue;
+      }
+      if (!inString) {
+        if (char === '[') bracketCount++;
+        if (char === ']') {
+          bracketCount--;
+          if (bracketCount === 0) {
+            const extracted = arrayStart.substring(0, i + 1);
+            console.log('✓ Extracted array, length:', extracted.length);
+            return extracted;
+          }
+        }
+      }
+    }
+  }
+
+  console.log('✗ All extraction strategies failed!');
+  console.log('Returning original response (will likely fail to parse)');
+  return response;
+}
+
 export async function generateSolutions(input: GenerateSolutionsInput): Promise<Solution[]> {
   const { needTitle, needDescription, companyContext, preferences } = input
   
@@ -198,41 +288,27 @@ ${companyContext.goals && companyContext.goals.length > 0 ? `- Each solution sho
     const lastTextBlock = textBlocks[textBlocks.length - 1]
     let response = lastTextBlock.text
 
-    console.log('AI response text (first 500 chars):', response.substring(0, 500))
-
     // Strip markdown code blocks if present (```json...```)
     if (response.trim().startsWith('```')) {
+      console.log('Removing markdown code block wrapper');
       response = response.replace(/^```(?:json)?\n?/, '');
       response = response.replace(/\n?```$/, '');
       response = response.trim();
     }
 
-    // Extract JSON from mixed conversational text
-    // Strategy: Find the actual start of the JSON object (opening brace)
-    let jsonContent = response;
-
-    // First, try to find a properly structured object with "solutions" key
-    // Look for opening brace that starts a valid JSON object
-    const jsonStartIndex = response.search(/\{\s*"solutions"\s*:\s*\[/);
-    if (jsonStartIndex !== -1) {
-      // Found the start, now find the matching closing brace
-      jsonContent = extractBalancedJSON(response.substring(jsonStartIndex));
-      console.log('Extracted JSON using balanced brace matching');
-    } else {
-      // Fallback: try regex match (less reliable)
-      const jsonMatch = response.match(/\{[\s\S]*?"solutions"[\s\S]*?\[[\s\S]*?\]\s*\}/);
-      if (jsonMatch) {
-        jsonContent = jsonMatch[0];
-        console.log('Extracted JSON using regex fallback');
-      }
-    }
+    // Use robust JSON extraction with extensive logging
+    const jsonContent = extractJSONFromResponse(response, 'solutions');
 
     let parsed;
     try {
       parsed = JSON.parse(jsonContent);
+      console.log('✓ Successfully parsed JSON');
+      console.log('Parsed structure keys:', Object.keys(parsed));
     } catch (parseError) {
-      console.error('JSON parse error. Attempted to parse:', jsonContent.substring(0, 500));
-      console.error('Full raw response:', response);
+      console.error('=== JSON PARSE ERROR ===');
+      console.error('Error:', parseError instanceof Error ? parseError.message : 'Unknown error');
+      console.error('Attempted to parse:', jsonContent.substring(0, 1000));
+      console.error('Parse error at position:', parseError instanceof SyntaxError ? (parseError as any).message : 'unknown');
       throw new Error(`Failed to parse AI response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
     }
 
