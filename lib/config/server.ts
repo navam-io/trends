@@ -199,7 +199,7 @@ function getDefaultServerConfig(): ServerConfig {
         service: 'sentry',
       },
       messages: {
-        api_key_missing: 'OpenAI API key is not configured. Please contact support.',
+        api_key_missing: 'Anthropic API key is not configured. Please contact support.',
         rate_limit: 'You\'ve reached the rate limit. Please try again in a few minutes.',
         network_error: 'Unable to connect to the AI service. Please check your internet connection.',
         generation_failed: 'Failed to generate content. Please try again or contact support if the issue persists.',

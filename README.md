@@ -9,10 +9,10 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![tRPC](https://img.shields.io/badge/tRPC-398CCB?style=for-the-badge&logo=trpc&logoColor=white)](https://trpc.io/)
-[![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
-[![GPT-4o](https://img.shields.io/badge/GPT--4o-FF6B6B?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/gpt-4)
+[![Anthropic](https://img.shields.io/badge/Anthropic-191919?style=for-the-badge&logo=anthropic&logoColor=white)](https://anthropic.com/)
+[![Claude](https://img.shields.io/badge/Claude_Sonnet_4-FF6B6B?style=for-the-badge&logo=anthropic&logoColor=white)](https://www.anthropic.com/claude)
 
-[🚀 Live Demo](https://trenddit.vercel.app) • [📚 Documentation](blog/) • [🤝 Contributing](#-contributing) • [🐛 Issues](https://github.com/trendditcom/trenddit-client/issues)
+[🚀 Live Demo](https://trends.vercel.app) • [📚 Documentation](blog/) • [🤝 Contributing](#-contributing) • [🐛 Issues](https://github.com/navam-io/trends/issues)
 
 ![Trends AI Workflow](blog/images/trenddit-workflow.png)
 
@@ -101,23 +101,23 @@ Transform market intelligence into implementation-ready roadmaps through our thr
 
 ### Prerequisites
 
-- Node.js 18+ 
-- OpenAI API key (required for AI features)
+- Node.js 18+
+- Anthropic API key (required for AI features)
 - Git
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/trendditcom/trenddit-client.git
-cd trenddit-client
+git clone https://github.com/navam-io/trends.git
+cd trends
 
 # Install dependencies
 npm install
 
 # Set up environment variables
 cp .env.local.example .env.local
-# Add your OpenAI API key to .env.local
+# Add your Anthropic API key to .env.local
 
 # Run development server with Turbopack
 npm run dev
@@ -193,7 +193,7 @@ graph TD
 | **Framework** | Next.js | 15.4.5 | App Router, Server Components, Turbopack |
 | **Language** | TypeScript | 5.0 | 100% strict mode, zero `any` types |
 | **API Layer** | tRPC | 11.4.3 | End-to-end type safety, no code generation |
-| **AI Engine** | OpenAI GPT-4o | 5.11.0 | Function calling, chain-of-thought reasoning |
+| **AI Engine** | Anthropic Claude | Sonnet 4 | Web search, chain-of-thought reasoning, citations |
 | **State Management** | Zustand | 5.0.7 | Feature-specific stores, no global state |
 | **Database** | Supabase | 2.53.0 | PostgreSQL with real-time subscriptions |
 | **Styling** | Tailwind CSS | 4.0 | Utility-first with class-variance-authority |
@@ -353,7 +353,7 @@ Trends follows a **"transparent failure"** approach:
 ## 📈 Getting Started Guide
 
 ### 1. Platform Setup (5 minutes)
-- Install dependencies and configure OpenAI API key
+- Install dependencies and configure Anthropic API key
 - Set up company profile for personalized intelligence
 - Verify AI functionality with test trend generation
 
@@ -391,7 +391,7 @@ Trends follows a **"transparent failure"** approach:
 
 ### Quick Links
 
-- **Live Platform**: [trenddit.vercel.app](https://trenddit.vercel.app)
+- **Live Platform**: [trends.vercel.app](https://trends.vercel.app)
 - **Development Guidelines**: [CLAUDE.md](CLAUDE.md)
 - **Feature Specifications**: [.claude/specs/features.md](.claude/specs/features.md)
 - **Architecture Documentation**: [.claude/specs/core.md](.claude/specs/core.md)
@@ -458,7 +458,7 @@ We welcome contributions from AI researchers, enterprise developers, and domain 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 **Third-Party Acknowledgments**:
-- [OpenAI](https://openai.com/) for GPT-4o and advanced AI capabilities
+- [Anthropic](https://anthropic.com/) for Claude Sonnet 4 and advanced AI capabilities
 - [Vercel](https://vercel.com/) for seamless deployment and edge computing
 - [Next.js Team](https://nextjs.org/) for the incredible React framework
 - [tRPC Contributors](https://trpc.io/) for end-to-end type safety
@@ -471,7 +471,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 *Not just a tool with AI features—an AI system with a human interface*
 
-[🚀 Try Live Demo](https://trenddit.vercel.app) • [📚 Read Documentation](blog/) • [💬 Join Community](https://discord.gg/trenddit) • [🐦 Follow Updates](https://twitter.com/trends)
+[🚀 Try Live Demo](https://trends.vercel.app) • [📚 Read Documentation](blog/) • [💬 Join Community](https://discord.gg/trends) • [🐦 Follow Updates](https://twitter.com/trends)
 
 **Made with ❤️ for enterprise technology leaders who demand more than generic recommendations**
 
