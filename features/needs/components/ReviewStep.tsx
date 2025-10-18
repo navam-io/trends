@@ -5,6 +5,7 @@ import { trpc } from '@/lib/trpc/client';
 import { clsx } from 'clsx';
 import { useEffect, useState } from 'react';
 import { Trend } from '@/features/trends/types/trend';
+import { parseCitationsToReact } from '@/features/trends/utils/citation-renderer';
 
 interface ReviewStepProps {
   onNext: () => void;
@@ -131,8 +132,8 @@ export function ReviewStep({ onNext, onPrevious }: ReviewStepProps) {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Selected AI Trend</h3>
             <div className="space-y-3">
               <div>
-                <h4 className="text-sm font-medium text-blue-900">{selectedTrend.title}</h4>
-                <p className="text-sm text-blue-700 mt-1">{selectedTrend.summary}</p>
+                <h4 className="text-sm font-medium text-blue-900">{parseCitationsToReact(selectedTrend.title)}</h4>
+                <p className="text-sm text-blue-700 mt-1">{parseCitationsToReact(selectedTrend.summary)}</p>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">

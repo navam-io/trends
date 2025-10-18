@@ -9,14 +9,15 @@ import { Card, CardContent, CardHeader } from '@/lib/ui/card';
 import { Button } from '@/lib/ui/button';
 import { Badge } from '@/lib/ui/badge';
 import { Trend } from '@/features/trends/types/trend';
-import { 
-  Zap, 
-  ExternalLink, 
+import {
+  Zap,
+  ExternalLink,
   Calendar,
   Shield,
   ShieldAlert,
   ShieldX
 } from 'lucide-react';
+import { parseCitationsToReact } from '@/features/trends/utils/citation-renderer';
 
 interface IntelligentTrendCardProps {
   trend: Trend;
@@ -78,7 +79,7 @@ export function IntelligentTrendCard({
       <CardHeader className="pb-3">
         {/* Title */}
         <h3 className="font-semibold text-gray-900 text-base mb-3">
-          {trend.title}
+          {parseCitationsToReact(trend.title)}
         </h3>
         
         {/* Metadata badges - consistent with row view */}
@@ -96,7 +97,7 @@ export function IntelligentTrendCard({
       <CardContent className="space-y-4">
         {/* Summary */}
         <p className="text-sm text-gray-800 leading-relaxed">
-          {trend.summary}
+          {parseCitationsToReact(trend.summary)}
         </p>
 
         {/* Action Button - consistent with row view */}

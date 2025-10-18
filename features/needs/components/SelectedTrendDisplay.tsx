@@ -3,13 +3,14 @@
 import { trpc } from '@/lib/trpc/client';
 import { Badge } from '@/lib/ui/badge';
 import { Card, CardContent } from '@/lib/ui/card';
-import { 
-  TrendingUp, 
-  ExternalLink, 
-  Calendar, 
+import {
+  TrendingUp,
+  ExternalLink,
+  Calendar,
   Target,
-  Loader2 
+  Loader2
 } from 'lucide-react';
+import { parseCitationsToReact } from '@/features/trends/utils/citation-renderer';
 
 interface SelectedTrendDisplayProps {
   trendId: string;
@@ -109,7 +110,7 @@ export function SelectedTrendDisplay({ trendId }: SelectedTrendDisplayProps) {
 
         {/* Trend Title */}
         <h3 className="font-semibold text-gray-900 text-base mb-3">
-          {trend.title}
+          {parseCitationsToReact(trend.title)}
         </h3>
         
         {/* Metadata badges */}
@@ -141,7 +142,7 @@ export function SelectedTrendDisplay({ trendId }: SelectedTrendDisplayProps) {
 
         {/* Summary */}
         <p className="text-sm text-gray-700 leading-relaxed">
-          {trend.summary}
+          {parseCitationsToReact(trend.summary)}
         </p>
 
         {/* Helper text */}
