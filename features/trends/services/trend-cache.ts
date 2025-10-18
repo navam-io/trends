@@ -19,9 +19,9 @@ export interface CacheMetrics {
 }
 
 class TrendCacheManager {
-  private readonly CACHE_KEY = 'trenddit_smart_cache';
-  private readonly FRESHNESS_THRESHOLD = 30 * 60 * 1000; // 30 minutes
-  private readonly MAX_CACHE_AGE = 4 * 60 * 60 * 1000; // 4 hours
+  private readonly CACHE_KEY = 'trends_smart_cache';
+  private readonly FRESHNESS_THRESHOLD = 2 * 60 * 60 * 1000; // 2 hours (consider fresh)
+  private readonly MAX_CACHE_AGE = 8 * 60 * 60 * 1000; // 8 hours (max before expiry)
   private readonly MAX_ENTRIES = 10;
 
   /**

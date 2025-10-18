@@ -35,17 +35,17 @@ cache:
   redis:
     enabled: true
     ttl:
-      trends: 1800      # 30 minutes
+      trends: 14400     # 4 hours (trends don't change frequently)
       needs: 3600       # 1 hour
       solutions: 3600   # 1 hour
       analysis: 7200    # 2 hours
-    
+
   # In-memory cache (client-side)
   memory:
     enabled: true
     max_size: 100       # MB
     ttl:
-      trends: 900       # 15 minutes
+      trends: 7200      # 2 hours (client-side cache)
       needs: 1800       # 30 minutes
       solutions: 1800   # 30 minutes
       

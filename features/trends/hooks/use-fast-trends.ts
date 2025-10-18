@@ -62,20 +62,27 @@ export function useFastTrends(options: UseFastTrendsOptions = {}): FastTrendsSta
       
       if (instantData.trends.length > 0) {
         // Filter by category if needed
-        const filteredTrends = category 
+        const filteredTrends = category
           ? instantData.trends.filter(t => t.category === category)
           : instantData.trends;
-          
+
         setTrends(filteredTrends);
         setHasCache(instantData.cached);
-        setIsComplete(!instantData.shouldRefresh);
-        
-        // If we need fresh data and don't have enough cached, generate new
-        if (instantData.shouldRefresh || filteredTrends.length < limit / 2) {
-          console.log('🔄 Cache needs refresh, generating fresh trends');
+        setIsComplete(true); // We have data, mark as complete
+
+        // Only regenerate if cache explicitly says we should AND we don't have enough trends
+        // This prevents unnecessary regeneration on every page load
+        if (instantData.shouldRefresh && filteredTrends.length < limit * 0.5) {
+          console.log('⚠️ Insufficient cached trends, generating fresh in background');
+          // Generate in background without blocking UI
           generateFreshTrends();
+        } else if (filteredTrends.length >= limit * 0.75) {
+          // We have plenty of cached trends (>75% of requested), use them!
+          console.log('✅ Using cached trends (' + filteredTrends.length + ' available), no regeneration needed');
+          setIsLoading(false);
         } else {
-          console.log('✅ Using cached trends, no refresh needed');
+          console.log('✅ Using cached trends, sufficient for display');
+          setIsLoading(false);
         }
       } else {
         console.log('📭 No cached trends, generating fresh');

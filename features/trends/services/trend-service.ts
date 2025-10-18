@@ -8,8 +8,8 @@ import { Trend, TrendCategory } from '../types/trend';
 
 // Master cache for trends - single source of truth
 let masterTrendsCache: { trends: Trend[], timestamp: number } | null = null;
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
-const STORAGE_KEY = 'trenddit_master_trends_cache';
+const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 hours (trends don't change frequently)
+const STORAGE_KEY = 'trends_master_cache';
 
 /**
  * Get master trends dataset with multi-layer caching (localStorage + memory)
