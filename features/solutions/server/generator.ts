@@ -137,28 +137,50 @@ ${companyContext.goals && companyContext.goals.length > 0 ? `- Each solution sho
       ]
     })
 
-    const content = completion.content[0]
-    if (!content || content.type !== 'text') {
+    // When AI uses web search, content may have multiple blocks
+    // Find the LAST text block which should contain the final JSON
+    const textBlocks = completion.content.filter(block => block.type === 'text')
+
+    if (textBlocks.length === 0) {
+      console.error('No text blocks in AI response:', JSON.stringify(completion.content, null, 2))
       throw new Error('No text response from Anthropic')
     }
-    let response = content.text
+
+    // Use the last text block (after all tool uses and thinking)
+    const lastTextBlock = textBlocks[textBlocks.length - 1]
+    let response = lastTextBlock.text
+
+    console.log('AI response text (first 200 chars):', response.substring(0, 200))
 
     // Strip markdown code blocks if present (```json...```)
     if (response.trim().startsWith('```')) {
-      // Remove opening ```json or ```
       response = response.replace(/^```(?:json)?\n?/, '');
-      // Remove closing ```
       response = response.replace(/\n?```$/, '');
       response = response.trim();
     }
 
-    const parsed = JSON.parse(response)
+    // Try to extract JSON if response has conversational text before/after
+    const jsonMatch = response.match(/\{[\s\S]*"solutions"[\s\S]*\}/);
+    if (jsonMatch) {
+      response = jsonMatch[0];
+      console.log('Extracted JSON from mixed response');
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(response);
+    } catch (parseError) {
+      console.error('JSON parse error. Raw response:', response);
+      throw new Error(`Failed to parse AI response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+    }
+
     const solutions = parsed.solutions || []
-    
+
     if (!Array.isArray(solutions) || solutions.length === 0) {
+      console.error('Invalid solutions array in parsed response:', parsed);
       throw new Error('Invalid response format from AI')
     }
-    
+
     return solutions.map((sol: any, index: number) => ({
       id: `solution_${Date.now()}_${index}`,
       needId: input.needId,
@@ -167,6 +189,11 @@ ${companyContext.goals && companyContext.goals.length > 0 ? `- Each solution sho
     }))
   } catch (error) {
     console.error('Error generating AI solutions:', error)
+
+    // Log the full error stack for debugging
+    if (error instanceof Error) {
+      console.error('Error stack:', error.stack);
+    }
     
     // Re-throw with appropriate error message
     if (error instanceof Error) {

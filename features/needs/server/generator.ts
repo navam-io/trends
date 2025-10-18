@@ -117,8 +117,21 @@ function parseNeedsFromCompletion(completion: string, trendId: string, companyId
       cleanedCompletion = cleanedCompletion.trim();
     }
 
+    // Try to extract JSON if response has conversational text before/after
+    const jsonMatch = cleanedCompletion.match(/\{[\s\S]*"needs"[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanedCompletion = jsonMatch[0];
+      console.log('Extracted JSON from mixed response (needs)');
+    }
+
     // Parse the cleaned JSON
-    const parsed = JSON.parse(cleanedCompletion);
+    let parsed;
+    try {
+      parsed = JSON.parse(cleanedCompletion);
+    } catch (parseError) {
+      console.error('JSON parse error in needs generator. Raw completion:', cleanedCompletion);
+      throw new Error(`Failed to parse AI response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+    }
     
     // Handle both array format (legacy) and object format (new)
     let parsedNeeds: any[];

@@ -45,12 +45,17 @@ export async function generateCompletion(prompt: string): Promise<string> {
       });
 
       // Extract text content from Claude's response
-      const content = response.content[0];
-      if (!content || content.type !== 'text') {
+      // When AI uses tools, content may have multiple blocks - find the last text block
+      const textBlocks = response.content.filter(block => block.type === 'text');
+
+      if (textBlocks.length === 0) {
+        console.error('No text blocks in AI response:', JSON.stringify(response.content, null, 2));
         throw new Error('No text response from AI');
       }
 
-      return content.text;
+      // Use the last text block (after all tool uses and reasoning)
+      const lastTextBlock = textBlocks[textBlocks.length - 1];
+      return lastTextBlock.text;
     }, {
       onRetry: (attempt, error) => {
         console.log(`Retrying Anthropic request (attempt ${attempt}):`, error.message);
