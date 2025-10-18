@@ -295,17 +295,25 @@ ${companyContext.goals && companyContext.goals.length > 0 ? `- Each solution sho
       console.log(`\nBlock ${i + 1}/${textBlocks.length} - Length: ${blockText.length}`);
       console.log(`First 200 chars: ${blockText.substring(0, 200)}`);
 
-      // Check if this block contains our expected JSON key
-      if (blockText.includes('"solutions"') || blockText.includes('solutions')) {
-        console.log(`✓ Block ${i + 1} contains "solutions" - using this block!`);
+      // Check for JSON structure: "solutions": not just the word "solutions"
+      // This prevents matching conversational text like "I'll research solutions"
+      const hasJSONKey = blockText.includes('"solutions"') && blockText.includes(':');
+      const hasJSONObject = blockText.includes('{') && blockText.includes('}');
+      const hasJSONArray = blockText.includes('[') && blockText.includes(']');
+      const looksLikeJSON = (hasJSONKey && hasJSONObject) || (hasJSONKey && hasJSONArray);
+
+      if (looksLikeJSON) {
+        console.log(`✓ Block ${i + 1} contains JSON structure with "solutions" key - using this block!`);
         responseWithJSON = blockText;
         foundBlockIndex = i;
         break;
+      } else if (blockText.includes('"solutions"')) {
+        console.log(`⚠ Block ${i + 1} has "solutions" but no JSON structure - skipping`);
       }
     }
 
     if (!responseWithJSON) {
-      console.error('✗ No block contains "solutions" key - using last block as fallback');
+      console.error('✗ No block contains JSON with "solutions" key - using last block as fallback');
       responseWithJSON = textBlocks[textBlocks.length - 1].text;
       foundBlockIndex = textBlocks.length - 1;
     }
