@@ -61,7 +61,7 @@ Analyze the following aspects of the codebase:
 ### Step 1: Setup Metrics Directory
 ```bash
 mkdir -p metrics
-cd /Users/manavsehgal/Developer/trends
+cd .
 ```
 
 ### Step 2: Count Lines of Code
