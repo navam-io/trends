@@ -7,6 +7,7 @@ import { trpc } from '@/lib/trpc/client'
 import { useSolutionsStore } from '../stores/solutionsStore'
 import { useNeedsStore } from '@/features/needs/stores/needsStore'
 import { SolutionCard } from './SolutionCard'
+import { ROICalculator } from './ROICalculator'
 import type { SolutionApproach } from '../types/solution'
 import { ErrorDisplay } from '@/lib/ui/error-display'
 import { ProgressLoader, SolutionCardSkeleton } from '@/lib/ui/skeleton'
@@ -20,6 +21,7 @@ export function SolutionMatching() {
   const [selectedApproach, setSelectedApproach] = useState<SolutionApproach | 'all'>('all')
   const [showROICalculator, setShowROICalculator] = useState(false)
   const [selectedSolutionId, setSelectedSolutionId] = useState<string | null>(null)
+  const [viewDetailsSolution, setViewDetailsSolution] = useState<typeof solutions[0] | null>(null)
   
   const { 
     solutions, 
@@ -95,6 +97,10 @@ export function SolutionMatching() {
     })
   }
   
+  const handleViewDetails = (solution: typeof solutions[0]) => {
+    setViewDetailsSolution(solution)
+  }
+
   const handleCalculateROI = (solutionId: string) => {
     setSelectedSolutionId(solutionId)
     setShowROICalculator(true)
@@ -218,6 +224,7 @@ export function SolutionMatching() {
               <SolutionCard
                 key={solution.id}
                 solution={solution}
+                onSelect={handleViewDetails}
                 onCalculateROI={handleCalculateROI}
               />
             ))}
@@ -235,6 +242,137 @@ export function SolutionMatching() {
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
+          </div>
+        )}
+
+        {/* View Details Modal */}
+        {viewDetailsSolution && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setViewDetailsSolution(null)}>
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="sticky top-0 bg-white border-b p-6 flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{viewDetailsSolution.title}</h2>
+                  {viewDetailsSolution.vendor && (
+                    <p className="text-gray-600 mt-1">by {viewDetailsSolution.vendor}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setViewDetailsSolution(null)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Description</h3>
+                  <p className="text-gray-700">{viewDetailsSolution.description}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">Cost Breakdown</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Initial Cost:</span>
+                        <span className="font-medium">${viewDetailsSolution.estimatedCost.initial.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Monthly:</span>
+                        <span className="font-medium">${viewDetailsSolution.estimatedCost.monthly.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Annual:</span>
+                        <span className="font-medium">${viewDetailsSolution.estimatedCost.annual.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">ROI Projections</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">3-Year Return:</span>
+                        <span className="font-medium text-green-600">${viewDetailsSolution.roi.threeYearReturn.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Break-even:</span>
+                        <span className="font-medium">{viewDetailsSolution.roi.breakEvenMonths} months</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Confidence:</span>
+                        <span className="font-medium">{Math.round(viewDetailsSolution.roi.confidenceScore * 100)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Key Benefits</h3>
+                  <ul className="space-y-1">
+                    {viewDetailsSolution.benefits.map((benefit, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-green-600 mt-1">✓</span>
+                        <span className="text-gray-700">{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Risks to Consider</h3>
+                  <ul className="space-y-1">
+                    {viewDetailsSolution.risks.map((risk, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-red-600 mt-1">!</span>
+                        <span className="text-gray-700">{risk}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Requirements</h3>
+                  <ul className="space-y-1">
+                    {viewDetailsSolution.requirements.map((req, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-blue-600 mt-1">→</span>
+                        <span className="text-gray-700">{req}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {viewDetailsSolution.alternatives && viewDetailsSolution.alternatives.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">Alternative Solutions</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {viewDetailsSolution.alternatives.map((alt, i) => (
+                        <span key={i} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
+                          {alt}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ROI Calculator Modal */}
+        {showROICalculator && selectedSolutionId && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <ROICalculator
+              solution={solutions.find(s => s.id === selectedSolutionId)!}
+              onClose={() => {
+                setShowROICalculator(false)
+                setSelectedSolutionId(null)
+              }}
+            />
           </div>
         )}
       </div>
