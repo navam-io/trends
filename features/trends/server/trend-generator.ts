@@ -113,11 +113,11 @@ export async function generateDynamicTrends(
 
     console.log('Trends AI response text (first 300 chars):', responseText.substring(0, 300));
 
-    // Strip markdown code blocks if present
-    if (responseText.trim().startsWith('```')) {
-      responseText = responseText.replace(/^```(?:json)?\n?/, '');
-      responseText = responseText.replace(/\n?```$/, '');
-      responseText = responseText.trim();
+    // Extract content from markdown code blocks if present (can be anywhere in response)
+    const markdownMatch = responseText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+    if (markdownMatch) {
+      console.log('Found markdown code block, extracting content');
+      responseText = markdownMatch[1].trim();
     }
 
     // Extract JSON object/array from mixed text - look for "trends" property
