@@ -1,0 +1,141 @@
+# Trends Configuration
+
+app:
+  name: "Trends"
+  version: "1.0.0"
+  environment: "${NODE_ENV}"
+
+# AI/LLM Configuration
+ai:
+  provider: "anthropic"
+  model: "claude-sonnet-4-20250514"
+  temperature: 0.3
+  max_tokens: 4000
+  
+  # System prompt for trend generation with web search
+  # This defines the AI's role and behavior when generating current trends using web search
+  systemPrompt: "You are a market intelligence analyst with web search capabilities. Search for and analyze the latest AI and technology developments to generate current, factual trends. Use web search to verify all information and source URLs. Always return valid JSON with real sources."
+  
+  # Retry configuration
+  retry:
+    max_attempts: 3
+    initial_delay: 1000  # ms
+    max_delay: 10000     # ms
+    backoff_factor: 2
+  
+  # Streaming configuration
+  streaming:
+    enabled: true
+    chunk_size: 50       # characters
+    flush_interval: 100  # ms
+
+# Caching Configuration
+cache:
+  # Redis/Vercel KV cache settings
+  redis:
+    enabled: true
+    ttl:
+      trends: 1800      # 30 minutes
+      needs: 3600       # 1 hour
+      solutions: 3600   # 1 hour
+      analysis: 7200    # 2 hours
+    
+  # In-memory cache (client-side)
+  memory:
+    enabled: true
+    max_size: 100       # MB
+    ttl:
+      trends: 900       # 15 minutes
+      needs: 1800       # 30 minutes
+      solutions: 1800   # 30 minutes
+      
+# Error Handling
+errors:
+  # Show detailed error messages to users
+  show_details: true
+  
+  # Log errors to external service
+  logging:
+    enabled: true
+    service: "sentry"
+    
+  # User-friendly error messages
+  messages:
+    api_key_missing: "OpenAI API key is not configured. Please contact support."
+    rate_limit: "You've reached the rate limit. Please try again in a few minutes."
+    network_error: "Unable to connect to the AI service. Please check your internet connection."
+    generation_failed: "Failed to generate content. Please try again or contact support if the issue persists."
+    
+# Loading States
+ui:
+  loading:
+    # Skeleton loading configuration
+    skeleton:
+      enabled: true
+      animation: "pulse"
+      duration: 1000    # ms
+      
+    # Progress indicators for long operations
+    progress:
+      enabled: true
+      show_after: 2000  # ms
+      messages:
+        - "Analyzing market trends..."
+        - "Generating insights..."
+        - "Preparing recommendations..."
+        - "Almost there..."
+        
+# Feature Flags
+features:
+  # Remove all mock data fallbacks
+  use_mock_data: false
+  
+  # Enable streaming responses
+  streaming_responses: true
+  
+  # Show detailed error messages
+  detailed_errors: true
+  
+  # Enable aggressive caching
+  aggressive_caching: true
+  
+# Rate Limiting
+rate_limiting:
+  # Per-user rate limits
+  user:
+    trends:
+      requests_per_minute: 10
+      requests_per_hour: 100
+    needs:
+      requests_per_minute: 5
+      requests_per_hour: 50
+    solutions:
+      requests_per_minute: 5
+      requests_per_hour: 50
+      
+# Performance
+performance:
+  # Prefetch configuration
+  prefetch:
+    enabled: true
+    strategies:
+      - "viewport"      # Prefetch when in viewport
+      - "hover"         # Prefetch on hover
+      - "priority"      # Prefetch high-priority content
+      
+  # Lazy loading
+  lazy_loading:
+    enabled: true
+    threshold: 0.1      # Intersection observer threshold
+    
+# Development
+development:
+  # Mock data for development only
+  mock_enabled: "${NODE_ENV === 'development' ? true : false}"
+  
+  # Verbose logging
+  verbose_logging: "${NODE_ENV === 'development' ? true : false}"
+  
+  # API endpoint overrides
+  api_endpoints:
+    openai: "${OPENAI_API_ENDPOINT || 'https://api.openai.com/v1'}"

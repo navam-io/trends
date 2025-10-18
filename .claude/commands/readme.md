@@ -1,0 +1,1 @@
+Review project code and .claude/specs/ folder to update README.md as a professionally designed top GitHub repo styled README for Trends. Make sure the README.md does not have any content from past features no longer part of released code. Also review blogs/ and blogs/images/ folder for any reusable content for README including placing relevant images.

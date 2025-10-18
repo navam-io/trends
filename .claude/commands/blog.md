@@ -1,0 +1,1 @@
+Review README.md, .claude/specs/ folder contents, and project code to create or update a series of detailed research, marketing, and user guidance related blog posts in markdown within blog/ folder. Review the blog/images/ folder contents to place the appropriate images within the blog posts. Think harder.
