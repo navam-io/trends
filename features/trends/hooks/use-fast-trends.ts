@@ -40,8 +40,10 @@ export function useFastTrends(options: UseFastTrendsOptions = {}): FastTrendsSta
     { category, limit },
     {
       enabled: autoStart,
-      staleTime: 0,
+      staleTime: 2 * 60 * 60 * 1000, // 2 hours - match server cache freshness threshold
       refetchOnWindowFocus: false,
+      refetchOnMount: false, // Don't refetch if we have cached data
+      refetchOnReconnect: false, // Don't refetch on reconnect
     }
   );
 
@@ -50,8 +52,10 @@ export function useFastTrends(options: UseFastTrendsOptions = {}): FastTrendsSta
     { limit, refresh: false },
     {
       enabled: false, // Only use when needed
-      staleTime: 60 * 1000, // 1 minute
+      staleTime: 2 * 60 * 60 * 1000, // 2 hours - match cache freshness
       refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
     }
   );
 

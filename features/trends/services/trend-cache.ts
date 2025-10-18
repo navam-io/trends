@@ -92,10 +92,27 @@ class TrendCacheManager {
 
   /**
    * Check if background refresh is needed
+   * Only returns true if cache is truly stale or empty
    */
   shouldRefresh(category?: TrendCategory): boolean {
-    const freshTrends = this.getFreshTrends(category);
-    return !freshTrends || freshTrends.length < 15; // Refresh if < 15 fresh trends
+    try {
+      const cached = this.getCacheData();
+      if (!cached || cached.length === 0) {
+        return true; // No cache at all
+      }
+
+      // Find the most recent cache entry
+      const mostRecent = cached.reduce((latest, entry) =>
+        entry.timestamp > latest.timestamp ? entry : latest
+      );
+
+      // Only refresh if the most recent cache is beyond freshness threshold
+      const age = Date.now() - mostRecent.timestamp;
+      return age > this.FRESHNESS_THRESHOLD; // > 2 hours old
+    } catch (error) {
+      console.warn('Failed to check refresh status:', error);
+      return false; // Don't refresh on error - use what we have
+    }
   }
 
   /**
